@@ -2,6 +2,7 @@ package fire;
 
 import java.awt.Image;
 import java.util.ArrayList;
+import javax.swing.ImageIcon;
 
 /** Grafický prvek, který je možné animovat.
  *
@@ -56,6 +57,8 @@ public class Sprite {
 	private long totalTime;
 	private long animTime;
 
+	private boolean running;
+
 	/** Vytvoření spritu.
 	 * 
 	 * @param b Chování spritu.
@@ -64,6 +67,8 @@ public class Sprite {
 		totalTime = 0;
 		frames = new ArrayList<Frame>();
 		behavior = b;
+
+		start();
 	}
 
 	/** Přidat snímek do animace.
@@ -82,6 +87,7 @@ public class Sprite {
 	public void start() {
 		animTime = 0;
 		currentFrameIndex = 0;
+		running = true;
 	}
 
 	/** Aktualizuje animaci.
@@ -95,16 +101,17 @@ public class Sprite {
 	 *	že se má animace přehrát jen jednou.
 	 */
 	public synchronized boolean update(long elapsedTime) {
-		if (frames.size() > 2) {
+		if (running && frames.size() >= 2) {
 			animTime += elapsedTime;
 
 			// Pokud jsem na konci animace, tak buď jedu odznova, anebo končím.
 			if (animTime >= totalTime) {
-				animTime %= totalTime;
 				currentFrameIndex = 0;
 				if (behavior == Behavior.PLAY_ONCE) {
+					running = false;
 					return true;
 				}
+				animTime %= totalTime;
 			}
 
 			// Najdu snímek, který má být zobrazen.
@@ -126,6 +133,15 @@ public class Sprite {
 		} else {
 			return frames.get(currentFrameIndex).getImage();
 		}
+	}
+
+	/** Načtení obrázku
+	 * 
+	 * @param filename Název souboru s obrázkem
+	 * @return Obrázek
+	 */
+	public static Image loadImage(String filename) {
+		return (new ImageIcon(filename)).getImage();
 	}
 
 }
