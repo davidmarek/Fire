@@ -21,7 +21,7 @@ public class Player {
 	private final int RIGHT = 1 << 2;
 	private final int BACK = 1 << 3;
 
-	private final int MAX_SPEED = 4;
+	private final int MAX_SPEED = 6;
 	private final double ACCELERATION = 0.005;
 	private final double DECCELERATION = 0.004;
 	private final double EPSILON = 0.1;
@@ -158,12 +158,6 @@ public class Player {
 		if (Math.abs(speed) > MAX_SPEED) { speed = Math.signum(speed)*MAX_SPEED; }
 		x = x - Math.cos(Math.toRadians(rotation))*speed;
 		y = y - Math.sin(Math.toRadians(rotation))*speed;
-
-		if (x < 0) { x = 800; }
-		else if (x > 800) { x = 0; }
-		if (y < 0) {y = 600; }
-		else if (y > 600) {y = 0;}
-
 
 		// Slouzi k zjisteni, ze uz nejaka akce skoncila (napr. exploze)
 		boolean endOfSprite = sprites.get(state).update(elapsedTime);

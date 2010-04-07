@@ -5,6 +5,10 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 /** Hlavní smyčka aplikace.
  *
@@ -15,6 +19,7 @@ public class GameCore {
 	private Screen screen;
 	private InputManager input;
 
+	private GameMap map;
 	private Player[] players;
 
 	private GameAction end;
@@ -32,11 +37,16 @@ public class GameCore {
 	 * @param g Graphics objekt okna.
 	 */
 	private void draw(Graphics2D g) {
-		g.clearRect(0, 0, 800, 600);
+		int w = screen.getWidth();
+		int h = screen.getHeight();
+		g.clearRect(0, 0, w, h);
+		g.drawImage(map.getMap(), 0, 0, w, h,
+				players[0].getX()-w, players[0].getY()-h,
+				players[0].getX()+w, players[0].getY()+h, screen);
 
 		for (Player p : players) {
 			AffineTransform transform = new AffineTransform();
-			transform.setToTranslation(p.getX(), p.getY());
+			transform.setToTranslation(w/2, h/2);
 			transform.translate(p.getWidth()/2, p.getHeight()/2);
 			transform.rotate(Math.toRadians(p.getRotation()));
 			transform.translate(-p.getWidth()/2, -p.getHeight()/2);
@@ -143,19 +153,29 @@ public class GameCore {
 		}
 	}
 
-	public GameCore(Screen s) {
+	public GameCore(Screen s) throws IOException {
 		done = false;
 		screen = s;
 		input = new InputManager(s);
 		initGameActions();
 
 		players = new Player[1];
-		players[0] = new Player(300, 300);
+		players[0] = new Player(screen.getWidth(), screen.getHeight());
+
+		BufferedImage gmap = ImageIO.read(new File("maps/first_map.jpg"));
+		BufferedImage bitmap = ImageIO.read(new File("maps/first_map_obst.gif"));
+		map = new GameMap(gmap, bitmap);
 	}
 
 	public static void main(String[] args) {
 		Screen w = new Screen(800, 600, false);
-		GameCore gc = new GameCore(w);
+		GameCore gc = null;
+		try {
+			gc = new GameCore(w);
+		} catch (IOException e) {
+			System.err.println("Resources not found");
+			System.exit(1);
+		}
 		// TODO: Otestovat Sprite
 		try {
 			gc.loop();
