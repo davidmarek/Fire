@@ -8,6 +8,7 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
 import javax.imageio.ImageIO;
 
 /** Hlavní smyčka aplikace.
@@ -21,6 +22,7 @@ public class GameCore {
 
 	private GameMap map;
 	private Player[] players;
+	private LinkedList<GameObject> gameObjects;
 
 	private GameAction end;
 
@@ -61,8 +63,8 @@ public class GameCore {
 	 */
 	private void update(long elapsedTime) {
 		processGameActions();
-		for (Player p : players) {
-			p.update(elapsedTime);
+		for (GameObject o : gameObjects) {
+			o.update(elapsedTime);
 		}
 	}
 
@@ -116,6 +118,12 @@ public class GameCore {
 
 		if (!pressedMove) { players[0].dontMove(); }
 		if (!pressedSteering) { players[0].dontSteer(); }
+
+		if (player1Shoot.isPressed()) {
+			System.out.println("Pif Paf");
+			player1Shoot.reset();
+			Missile m = players[0].shoot();
+		}
 	}
 
 
@@ -159,12 +167,15 @@ public class GameCore {
 		input = new InputManager(s);
 		initGameActions();
 
-		players = new Player[1];
-		players[0] = new Player(screen.getWidth(), screen.getHeight());
-
 		BufferedImage gmap = ImageIO.read(new File("maps/first_map.jpg"));
 		BufferedImage bitmap = ImageIO.read(new File("maps/first_map_obst.gif"));
 		map = new GameMap(gmap, bitmap);
+
+		players = new Player[1];
+		players[0] = new Player(screen.getWidth(), screen.getHeight(), map);
+
+		gameObjects = new LinkedList<GameObject>();
+		gameObjects.add(players[0]);
 	}
 
 	public static void main(String[] args) {

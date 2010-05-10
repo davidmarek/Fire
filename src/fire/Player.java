@@ -10,7 +10,7 @@ import java.util.Map;
  *
  * @author David Marek <davidm@atrey.karlin.mff.cuni.cz>
  */
-public class Player {
+public class Player implements GameObject {
 
 	private enum State {
 		STANDING, MOVING;
@@ -38,6 +38,8 @@ public class Player {
 	/** Zdraví hráče. */
 	private int health;
 
+	private GameMap map;
+
 	/** Stav hrace */
 	State state;
 	/** Jednotlive sprity pro ruzne stavy. */
@@ -51,7 +53,7 @@ public class Player {
 	 * @param x Startovní x-ová pozice hráče
 	 * @param y Startovní y-ová pozice hráče
 	 */
-	public Player(int x, int y) {
+	public Player(int x, int y, GameMap map) {
 		loadSprites();
 		state = State.STANDING;
 		this.x = x;
@@ -59,6 +61,7 @@ public class Player {
 		moving = 0;
 		speed = 0;
 		rotation = 90;
+		this.map = map;
 	}
 
 	/** Načtení spritů
@@ -156,8 +159,13 @@ public class Player {
 		else {state = State.STANDING; }
 
 		if (Math.abs(speed) > MAX_SPEED) { speed = Math.signum(speed)*MAX_SPEED; }
-		x = x - Math.cos(Math.toRadians(rotation))*speed;
-		y = y - Math.sin(Math.toRadians(rotation))*speed;
+		double newx = x - Math.cos(Math.toRadians(rotation))*speed;
+		double newy = y - Math.sin(Math.toRadians(rotation))*speed;
+
+		if (map.freePlace((int)newx, (int)newy)) {
+			x = newx;
+			y = newy;
+		}
 
 		// Slouzi k zjisteni, ze uz nejaka akce skoncila (napr. exploze)
 		boolean endOfSprite = sprites.get(state).update(elapsedTime);
@@ -189,5 +197,14 @@ public class Player {
 	
 	public void dontSteer() {
 		moving &= ~(LEFT | RIGHT);
+	}
+
+	public boolean isAlive() {
+		return health > 0;
+	}
+
+	public Missile shoot() {
+		Missile m = new Missile(this.x, this.y, this.rotation, this.map);
+		return m;
 	}
 }
