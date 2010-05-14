@@ -21,7 +21,7 @@ public class Screen extends JFrame {
 	private int screenHeight;
 	private boolean fullscreen;
 
-	private static final String title = "Tunneler";
+	private static final String title = "Fire";
 
 	/** Šířka okna.
 	 * @return Šířka okna.

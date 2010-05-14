@@ -62,6 +62,7 @@ public class Player implements GameObject {
 		speed = 0;
 		rotation = 90;
 		this.map = map;
+		health = 100;
 	}
 
 	/** Načtení spritů
@@ -108,7 +109,7 @@ public class Player implements GameObject {
 		return (int)y;
 	}
 
-	public double getRotation() {
+	public double getHeading() {
 		return rotation;
 	}
 
@@ -204,7 +205,9 @@ public class Player implements GameObject {
 	}
 
 	public Missile shoot() {
-		Missile m = new Missile(this.x, this.y, this.rotation, this.map);
+		double newX = x+getWidth()/2;
+		double newY = y+getHeight()/2;
+		Missile m = new Missile(newX, newY, this.rotation, this.map);
 		return m;
 	}
 }

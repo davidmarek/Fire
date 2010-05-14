@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import javax.imageio.ImageIO;
 
 /** Hlavní smyčka aplikace.
@@ -32,6 +33,12 @@ public class GameCore {
 	private GameAction player1Right;
 	private GameAction player1Shoot;
 
+	private GameAction player2Forward;
+	private GameAction player2Back;
+	private GameAction player2Left;
+	private GameAction player2Right;
+	private GameAction player2Shoot;
+
 	private boolean done;
 
 	/** Vykreslení na obrazovku.
@@ -41,20 +48,61 @@ public class GameCore {
 	private void draw(Graphics2D g) {
 		int w = screen.getWidth();
 		int h = screen.getHeight();
-		g.clearRect(0, 0, w, h);
-		g.drawImage(map.getMap(), 0, 0, w, h,
-				players[0].getX()-w, players[0].getY()-h,
-				players[0].getX()+w, players[0].getY()+h, screen);
 
-		for (Player p : players) {
-			AffineTransform transform = new AffineTransform();
-			transform.setToTranslation(w/2, h/2);
-			transform.translate(p.getWidth()/2, p.getHeight()/2);
-			transform.rotate(Math.toRadians(p.getRotation()));
-			transform.translate(-p.getWidth()/2, -p.getHeight()/2);
-			g.drawImage(p.getSprite(), transform, screen);
+		Player p = players[0];
+		g.setClip(0,0,w/2,h);
+		g.clearRect(0, 0, w, h);
+		g.drawImage(map.getMap(), 0, 0, w/2, h,
+				players[0].getX()-w/4, players[0].getY()-h/2,
+				players[0].getX()+w/4, players[0].getY()+h/2, screen);
+
+		AffineTransform transform = new AffineTransform();
+		transform.setToTranslation(w/4, h/2);
+
+		transform.translate(p.getWidth()/2, p.getHeight()/2);
+		transform.rotate(Math.toRadians(p.getHeading()));
+		transform.translate(-p.getWidth()/2, -p.getHeight()/2);
+		g.drawImage(p.getSprite(), transform, screen);
+
+		for (GameObject o : gameObjects) {
+			if (o != p) {
+				transform.setToTranslation(o.getX()-p.getX()+w/4, o.getY()-p.getY()+h/2);
+
+				transform.translate(o.getWidth()/2, o.getHeight()/2);
+				transform.rotate(Math.toRadians(o.getHeading()));
+				transform.translate(-o.getWidth()/2, -o.getHeight()/2);
+
+				g.drawImage(o.getSprite(), transform, screen);
+			}
 		}
+
 		// TODO: Predelat kresleni
+		p = players[1];
+		g.setClip(w/2,0,w,h);
+		g.clearRect(w/2, 0, w, h);
+		g.drawImage(map.getMap(), w/2, 0, w, h,
+				p.getX()-w/4, p.getY()-h/2,
+				p.getX()+w/4, p.getY()+h/2, screen);
+
+		transform = new AffineTransform();
+		transform.setToTranslation(3*w/4, h/2);
+
+		transform.translate(p.getWidth()/2, p.getHeight()/2);
+		transform.rotate(Math.toRadians(p.getHeading()));
+		transform.translate(-p.getWidth()/2, -p.getHeight()/2);
+		g.drawImage(p.getSprite(), transform, screen);
+
+		for (GameObject o : gameObjects) {
+			if (o != p) {
+				transform.setToTranslation(o.getX()-p.getX()+3*w/4, o.getY()-p.getY()+h/2);
+
+				transform.translate(o.getWidth()/2, o.getHeight()/2);
+				transform.rotate(Math.toRadians(o.getHeading()));
+				transform.translate(-o.getWidth()/2, -o.getHeight()/2);
+
+				g.drawImage(o.getSprite(), transform, screen);
+			}
+		}
 	}
 
 	/** Aktualizace hry.
@@ -63,8 +111,13 @@ public class GameCore {
 	 */
 	private void update(long elapsedTime) {
 		processGameActions();
-		for (GameObject o : gameObjects) {
+		ListIterator<GameObject> li = gameObjects.listIterator();
+		while (li.hasNext()) {
+			GameObject o = li.next();
 			o.update(elapsedTime);
+			if (!o.isAlive()) {
+				li.remove();
+			}
 		}
 	}
 
@@ -86,7 +139,21 @@ public class GameCore {
 
 		player1Shoot = new GameAction("Player 1 shoot");
 		input.mapToKey(player1Shoot, KeyEvent.VK_CONTROL);
-		// TODO: Dodelat herni akce a jejich zpracovani
+
+		player2Forward = new GameAction("Player 2 forward");
+		input.mapToKey(player2Forward, KeyEvent.VK_W);
+
+		player2Back = new GameAction("Player 2 back");
+		input.mapToKey(player2Back, KeyEvent.VK_S);
+
+		player2Left = new GameAction("Player 2 left");
+		input.mapToKey(player2Left, KeyEvent.VK_A);
+
+		player2Right = new GameAction("Player 2 right");
+		input.mapToKey(player2Right, KeyEvent.VK_D);
+
+		player2Shoot = new GameAction("Player 2 shoot");
+		input.mapToKey(player2Shoot, KeyEvent.VK_Q);
 	}
 
 	private void processGameActions() {
@@ -95,34 +162,67 @@ public class GameCore {
 			end.reset();
 		}
 
-		boolean pressedMove = false, pressedSteering = false;
+		boolean pressed1Move = false, pressed1Steering = false;
 		if (player1Forward.isPressed()) { 
 			players[0].forward();
-			pressedMove = true;
+			pressed1Move = true;
 		} 
 
 		if (player1Back.isPressed()) {
 			players[0].back();
-			pressedMove = true;
+			pressed1Move = true;
 		} 
 
 		if (player1Left.isPressed()) {
 			players[0].left();
-			pressedSteering = true;
+			pressed1Steering = true;
 		}
 
 		if (player1Right.isPressed()) {
 			players[0].right();
-			pressedSteering = true;
+			pressed1Steering = true;
 		}	
 
-		if (!pressedMove) { players[0].dontMove(); }
-		if (!pressedSteering) { players[0].dontSteer(); }
+		if (!pressed1Move) { players[0].dontMove(); }
+		if (!pressed1Steering) { players[0].dontSteer(); }
 
 		if (player1Shoot.isPressed()) {
 			System.out.println("Pif Paf");
 			player1Shoot.reset();
 			Missile m = players[0].shoot();
+			gameObjects.add(m);
+		}
+
+		// Druhy hrac
+		boolean pressed2Move = false, pressed2Steering = false;
+		if (player2Forward.isPressed()) {
+			players[1].forward();
+			pressed2Move = true;
+		}
+
+		if (player2Back.isPressed()) {
+			players[1].back();
+			pressed2Move = true;
+		}
+
+		if (player2Left.isPressed()) {
+			players[1].left();
+			pressed2Steering = true;
+		}
+
+		if (player2Right.isPressed()) {
+			players[1].right();
+			pressed2Steering = true;
+		}
+
+		if (!pressed2Move) { players[1].dontMove(); }
+		if (!pressed2Steering) { players[1].dontSteer(); }
+
+		if (player2Shoot.isPressed()) {
+			System.out.println("Pif Paf");
+			player2Shoot.reset();
+			Missile m = players[1].shoot();
+			gameObjects.add(m);
 		}
 	}
 
@@ -171,11 +271,13 @@ public class GameCore {
 		BufferedImage bitmap = ImageIO.read(new File("maps/first_map_obst.gif"));
 		map = new GameMap(gmap, bitmap);
 
-		players = new Player[1];
+		players = new Player[2];
 		players[0] = new Player(screen.getWidth(), screen.getHeight(), map);
+		players[1] = new Player(screen.getWidth()+10, screen.getHeight()+10, map);
 
 		gameObjects = new LinkedList<GameObject>();
 		gameObjects.add(players[0]);
+		gameObjects.add(players[1]);
 	}
 
 	public static void main(String[] args) {
