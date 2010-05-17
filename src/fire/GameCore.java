@@ -1,5 +1,6 @@
 package fire;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -22,6 +23,8 @@ public class GameCore {
 	private InputManager input;
 
 	private GameMap map;
+	private ObjectsList objectsList;
+
 	private Player[] players;
 	private LinkedList<GameObject> gameObjects;
 
@@ -38,6 +41,12 @@ public class GameCore {
 	private GameAction player2Left;
 	private GameAction player2Right;
 	private GameAction player2Shoot;
+
+	private long milliSec1;
+	private long milliSec2;
+	private boolean shot1;
+	private boolean shot2;
+
 
 	private boolean done;
 
@@ -60,7 +69,7 @@ public class GameCore {
 		transform.setToTranslation(w/4, h/2);
 
 		transform.translate(p.getWidth()/2, p.getHeight()/2);
-		transform.rotate(Math.toRadians(p.getHeading()));
+		transform.rotate(Math.toRadians((double)p.getHeading()));
 		transform.translate(-p.getWidth()/2, -p.getHeight()/2);
 		g.drawImage(p.getSprite(), transform, screen);
 
@@ -91,6 +100,14 @@ public class GameCore {
 		transform.rotate(Math.toRadians(p.getHeading()));
 		transform.translate(-p.getWidth()/2, -p.getHeight()/2);
 		g.drawImage(p.getSprite(), transform, screen);
+		g.drawRect(3*w/4, h/2, (int)p.getWidth(), (int)p.getHeight());
+		g.setColor(Color.red);
+		g.drawRect(3*w/4 + (int)p.getWidth()/2, h/2 + (int)p.getHeight()/2, 1, 1);
+		g.setColor(Color.blue);
+		g.drawRect(p.newXp - p.getX() + 3*w/4, p.newYp - p.getY() + h/2, 1, 1);
+		g.setColor(Color.yellow);
+		g.drawRect(p.newXLp - p.getX() + 3*w/4, p.newYLp - p.getY() + h/2, 1, 1);
+		g.setColor(Color.black);
 
 		for (GameObject o : gameObjects) {
 			if (o != p) {
@@ -101,6 +118,7 @@ public class GameCore {
 				transform.translate(-o.getWidth()/2, -o.getHeight()/2);
 
 				g.drawImage(o.getSprite(), transform, screen);
+				g.drawRect((int)o.getX()-p.getX()+3*w/4, (int)o.getY()-p.getY()+h/2, (int)o.getWidth(), (int)o.getHeight());
 			}
 		}
 	}
@@ -137,8 +155,8 @@ public class GameCore {
 		player1Right = new GameAction("Player 1 right");
 		input.mapToKey(player1Right, KeyEvent.VK_RIGHT);
 
-		player1Shoot = new GameAction("Player 1 shoot");
-		input.mapToKey(player1Shoot, KeyEvent.VK_CONTROL);
+		player1Shoot = new GameAction("Player 1 shoot");//, GameAction.Behavior.DETECT_INITIAL_PRESS_ONLY);
+		input.mapToKey(player1Shoot, KeyEvent.VK_SLASH);
 
 		player2Forward = new GameAction("Player 2 forward");
 		input.mapToKey(player2Forward, KeyEvent.VK_W);
@@ -152,7 +170,7 @@ public class GameCore {
 		player2Right = new GameAction("Player 2 right");
 		input.mapToKey(player2Right, KeyEvent.VK_D);
 
-		player2Shoot = new GameAction("Player 2 shoot");
+		player2Shoot = new GameAction("Player 2 shoot");//, GameAction.Behavior.DETECT_INITIAL_PRESS_ONLY);
 		input.mapToKey(player2Shoot, KeyEvent.VK_Q);
 	}
 
@@ -186,11 +204,15 @@ public class GameCore {
 		if (!pressed1Move) { players[0].dontMove(); }
 		if (!pressed1Steering) { players[0].dontSteer(); }
 
-		if (player1Shoot.isPressed()) {
-			System.out.println("Pif Paf");
-			player1Shoot.reset();
+		if (player1Shoot.isPressed() && System.currentTimeMillis() >= 300+milliSec1) {
 			Missile m = players[0].shoot();
 			gameObjects.add(m);
+			milliSec1 = System.currentTimeMillis();
+			shot1 = true;
+		}
+
+		if (player1Shoot.isReleased()) {
+			shot1 = false;
 		}
 
 		// Druhy hrac
@@ -218,12 +240,17 @@ public class GameCore {
 		if (!pressed2Move) { players[1].dontMove(); }
 		if (!pressed2Steering) { players[1].dontSteer(); }
 
-		if (player2Shoot.isPressed()) {
-			System.out.println("Pif Paf");
-			player2Shoot.reset();
+		if (player2Shoot.isPressed() && System.currentTimeMillis() >= 300+milliSec2) {
 			Missile m = players[1].shoot();
 			gameObjects.add(m);
+			milliSec2 = System.currentTimeMillis();
+			shot2 = true;
 		}
+
+		if (player2Shoot.isReleased()) {
+			shot2 = false;
+		}
+
 	}
 
 
@@ -271,13 +298,19 @@ public class GameCore {
 		BufferedImage bitmap = ImageIO.read(new File("maps/first_map_obst.gif"));
 		map = new GameMap(gmap, bitmap);
 
+		objectsList = new ObjectsList();
+
 		players = new Player[2];
-		players[0] = new Player(screen.getWidth(), screen.getHeight(), map);
-		players[1] = new Player(screen.getWidth()+10, screen.getHeight()+10, map);
+		players[0] = new Player(screen.getWidth(), screen.getHeight(), map, objectsList);
+		players[1] = new Player(screen.getWidth()+10, screen.getHeight()+10, map, objectsList);
 
 		gameObjects = new LinkedList<GameObject>();
 		gameObjects.add(players[0]);
 		gameObjects.add(players[1]);
+
+		objectsList.add(players[0]);
+		objectsList.add(players[1]);
+
 	}
 
 	public static void main(String[] args) {

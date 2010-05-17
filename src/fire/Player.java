@@ -12,6 +12,15 @@ import java.util.Map;
  */
 public class Player implements GameObject {
 
+
+	//DEBUG
+	public int newXp;
+	public int newYp;
+
+	public int newXLp;
+	public int newYLp;
+	//END OF DEBUG
+
 	private enum State {
 		STANDING, MOVING;
 	}
@@ -25,7 +34,7 @@ public class Player implements GameObject {
 	private final double ACCELERATION = 0.005;
 	private final double DECCELERATION = 0.004;
 	private final double EPSILON = 0.1;
-	private final double ROTATE_SPEED = 3;
+	private final int ROTATE_SPEED = 3;
 
 	private int moving;
 
@@ -34,11 +43,12 @@ public class Player implements GameObject {
 	/** Rychlost hráče. */
 	private double speed;
 	/** Natočení hráče. */
-	private double rotation;
+	private int rotation;
 	/** Zdraví hráče. */
 	private int health;
 
 	private GameMap map;
+	private ObjectsList objectList;
 
 	/** Stav hrace */
 	State state;
@@ -53,16 +63,17 @@ public class Player implements GameObject {
 	 * @param x Startovní x-ová pozice hráče
 	 * @param y Startovní y-ová pozice hráče
 	 */
-	public Player(int x, int y, GameMap map) {
+	public Player(int x, int y, GameMap map, ObjectsList objectList) {
 		loadSprites();
-		state = State.STANDING;
+		this.state = State.STANDING;
 		this.x = x;
 		this.y = y;
-		moving = 0;
-		speed = 0;
-		rotation = 90;
+		this.moving = 0;
+		this.speed = 0;
+		this.rotation = 90;
 		this.map = map;
-		health = 100;
+		this.health = 100;
+		this.objectList = objectList;
 	}
 
 	/** Načtení spritů
@@ -109,7 +120,7 @@ public class Player implements GameObject {
 		return (int)y;
 	}
 
-	public double getHeading() {
+	public int getHeading() {
 		return rotation;
 	}
 
@@ -160,12 +171,21 @@ public class Player implements GameObject {
 		else {state = State.STANDING; }
 
 		if (Math.abs(speed) > MAX_SPEED) { speed = Math.signum(speed)*MAX_SPEED; }
-		double newx = x - Math.cos(Math.toRadians(rotation))*speed;
-		double newy = y - Math.sin(Math.toRadians(rotation))*speed;
+		double newx = x - MathFuncs.cos(rotation)*speed;
+		double newy = y - MathFuncs.sin(rotation)*speed;
 
-		if (map.freePlace((int)newx, (int)newy)) {
+		newXp = (int) (x + getWidth()/2  - (getWidth()/2 + 17) * MathFuncs.cos(rotation));
+		newYp = (int) (y + getHeight()/2 - (getHeight()/2 + 17) * MathFuncs.sin(rotation));
+
+		newXLp = (int) (x + getWidth()/2  - (getWidth()/2 - 5) * MathFuncs.cos(rotation-90 > 0 ? rotation-90 : 360 + rotation - 90));
+		newYLp = (int) (y + getHeight()/2 - (getHeight()/2 - 5) * MathFuncs.sin(rotation-90 > 0 ? rotation-90 : 360 + rotation - 90));
+
+		if (map.freePlace((int)newx, (int)newy) && !objectList.somethingOnCoords(newXp, newYp) &&
+			(!objectList.somethingOnCoords(newXLp, newYLp) || objectList.getObjectOnCoords(newXLp, newYLp).equals(this))) {
 			x = newx;
 			y = newy;
+		} else {
+			speed = 0;
 		}
 
 		// Slouzi k zjisteni, ze uz nejaka akce skoncila (napr. exploze)
@@ -205,9 +225,7 @@ public class Player implements GameObject {
 	}
 
 	public Missile shoot() {
-		double newX = x+getWidth()/2;
-		double newY = y+getHeight()/2;
-		Missile m = new Missile(newX, newY, this.rotation, this.map);
+		Missile m = new Missile(newXp, newYp, this.rotation, this.map, this.objectList);
 		return m;
 	}
 }

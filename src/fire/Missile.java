@@ -17,13 +17,17 @@ public class Missile implements GameObject{
 		MISSILE, EXPLOSION;
 	}
 
-	private final int SPEED = 8;
+	private final int SPEED = 15;
 
 	private double x;
 	private double y;
-	private double heading;
+	private double diffX;
+	private double diffY;
+
+	private int heading;
 
 	private GameMap map;
+	private ObjectsList objectList;
 
 	private boolean alive;
 
@@ -57,12 +61,17 @@ public class Missile implements GameObject{
 		}
 	}
 
-	public Missile(double x, double y, double heading, GameMap map) {
+	public Missile(double x, double y, int heading, GameMap map, ObjectsList objectsList) {
 		this.x = x;
 		this.y = y;
+
+		this.diffX = MathFuncs.cos(heading)*SPEED;
+		this.diffY = MathFuncs.sin(heading)*SPEED;
+
 		this.heading = heading;
 
 		this.map = map;
+		this.objectList = objectsList;
 
 		this.alive = true;
 		this.explosion = new Sprite(Sprite.Behavior.PLAY_ONCE);
@@ -86,11 +95,16 @@ public class Missile implements GameObject{
 
 			case MISSILE:
 				missile.update(elapsedTime);
-				x = x - Math.cos(Math.toRadians(heading))*SPEED;
-				y = y - Math.sin(Math.toRadians(heading))*SPEED;
+				x -= diffX;
+				y -= diffY;
 				// TODO: Kontrola narazu
-				if (!map.freePlace((int)x, (int)y)) {
+				if (!map.freePlace((int)x, (int)y) || objectList.somethingOnCoords((int)x, (int)y)) {
 					state = State.EXPLOSION;
+					GameObject o = objectList.getObjectOnCoords((int)x, (int)y);
+					if (o != null) {
+						x = o.getX();
+						y = o.getY();
+					}
 				}
 				break;
 		}
@@ -118,7 +132,7 @@ public class Missile implements GameObject{
 		return (int)y;
 	}
 
-	public double getHeading() {
+	public int getHeading() {
 		return heading;
 	}
 

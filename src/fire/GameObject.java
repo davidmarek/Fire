@@ -27,6 +27,6 @@ public interface GameObject {
 
 	public double getHeight();
 
-	public double getHeading();
+	public int getHeading();
 
 }

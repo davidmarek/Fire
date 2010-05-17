@@ -98,6 +98,14 @@ public class GameAction {
 		return getAmount() != 0;
 	}
 
+	/** Kontrola, zda-li je klávesa puštěna.
+	 * 
+	 * @return Klavesa není stisknuta?
+	 */
+	public synchronized boolean isReleased() {
+		return state == State.RELEASED;
+	}
+
 	/** Počet stisknutí klávesy od poslední kontroly.
 	 * 
 	 * @return Počet stisknutí.
