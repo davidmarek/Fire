@@ -5,7 +5,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;
 
-/**
+/** Správce vstupu.
+ *
+ * Zpracovává události stisků kláves.
  *
  * @author David Marek <davidm@atrey.karlin.mff.cuni.cz>
  */

@@ -7,17 +7,21 @@ import java.io.IOException;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
 
-/**
+/** Raketa vystřelená hráčem.
  *
  * @author David Marek <davidm@atrey.karlin.mff.cuni.cz>
  */
 public class Missile implements GameObject{
 
+	/** Stav rakety (letí, vybuchuje).
+	 * 
+	 */
 	private enum State {
 		MISSILE, EXPLOSION;
 	}
 
 	private final int SPEED = 15;
+	private final int DMG = 20;
 
 	private double x;
 	private double y;
@@ -56,11 +60,20 @@ public class Missile implements GameObject{
 			images.add(ImageIO.read(new File("resources/explosion/ex12.png")));
 
 			mis = ImageIO.read(new File("resources/missile.png"));
+
 		} catch(IOException e) {
 			System.err.println("Can't find resources.");
 		}
 	}
 
+	/** Vytvoření rakety.
+	 *
+	 * @param x X-ová souřadnice vypálení.
+	 * @param y Y-ová souřadnice vypálení.
+	 * @param heading Natočení rakety.
+	 * @param map Herní mapa.
+	 * @param objectsList Seznam překážek v mapě.
+	 */
 	public Missile(double x, double y, int heading, GameMap map, ObjectsList objectsList) {
 		this.x = x;
 		this.y = y;
@@ -84,6 +97,10 @@ public class Missile implements GameObject{
 		this.state = State.MISSILE;
 	}
 
+	/** Aktualizace střely.
+	 *
+	 * @param elapsedTime
+	 */
 	public void update(long elapsedTime) {
 		switch (state) {
 			case EXPLOSION:
@@ -97,19 +114,23 @@ public class Missile implements GameObject{
 				missile.update(elapsedTime);
 				x -= diffX;
 				y -= diffY;
-				// TODO: Kontrola narazu
 				if (!map.freePlace((int)x, (int)y) || objectList.somethingOnCoords((int)x, (int)y)) {
 					state = State.EXPLOSION;
 					GameObject o = objectList.getObjectOnCoords((int)x, (int)y);
 					if (o != null) {
 						x = o.getX();
 						y = o.getY();
+						o.hurt(DMG);
 					}
 				}
 				break;
 		}
 	}
 
+	/** Získání obrázku rakety.
+	 *
+	 * @return Obrázek rakety.
+	 */
 	public Image getSprite() {
 		switch (state) {
 			case EXPLOSION:
@@ -120,29 +141,82 @@ public class Missile implements GameObject{
 		}
 	}
 
+	/** Zjisti, jestli raketa už vybouchla.
+	 *
+	 * @return Raketa ještě nevybouchla?
+	 */
 	public boolean isAlive() {
 		return this.alive;
 	}
 
+	/** Vrať X-ovou souřadnici.
+	 *
+	 * @return X-ová souřadnice.
+	 */
 	public int getX() {
 		return (int)x;
 	}
 
+	/** Vrať Y-ovou souřadnici.
+	 *
+	 * @return Y-ová souřadnice.
+	 */
 	public int getY() {
 		return (int)y;
 	}
 
+	/** Vrať směr rakety.
+	 *
+	 * @return Směr rakety.
+	 */
 	public int getHeading() {
 		return heading;
 	}
 
+	/** Vrať šířku rakety.
+	 *
+	 * @return Šířka rakety.
+	 */
 	public double getWidth() {
 		return getSprite().getWidth(null);
 	}
 
+	/** Vrať výšku rakety.
+	 *
+	 * @return Výška rakety.
+	 */
 	public double getHeight() {
 		return getSprite().getHeight(null);
 	}
 
+	/** Vrať zdraví rakety.
+	 *
+	 * Raketa nejde zničit, dokud sama do něčeho nenarazí a neexploduje, proto
+	 * vždy vrací stejné zdraví.
+	 *
+	 * return Zdraví rakety.
+	 */
+	public int getHealth() {
+		return 1;
+	}
+
+	/** Vrať maximální hodnotu zdraví.
+	 *
+	 * Raketa nejde zničit, takže vrací vždy stejně jako je aktuální zdraví.
+	 *
+	 * @return Maximální zdraví rakety.
+	 */
+	public int getMaxHealth() {
+		return 1;
+	}
+
+	/** Způsob poškození.
+	 *
+	 * Raketa nejde zničit, takže tato metoda nic nedělá.
+	 *
+	 * @param dmg Velikost poškození.
+	 */
+	public void hurt(int dmg) {
+	}
 
 }
